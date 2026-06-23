@@ -1,0 +1,111 @@
+# ~/.fav/fav
+# Favourite-commands tool for bash. Source this file from ~/.bash_profile:
+#   [ -f ~/.fav/fav ] && source ~/.fav/fav
+
+FAV_FILE="${FAV_FILE:-$HOME/.fav/favourites.txt}"
+
+fav() {
+    local cmd="$1"
+
+    case "$cmd" in
+        add)
+            shift
+            _fav_add "$@"
+            ;;
+        help|-h|--help)
+            _fav_help
+            ;;
+        "")
+            _fav_list
+            ;;
+        *)
+            printf 'fav: unknown command "%s"\n\n' "$cmd" >&2
+            _fav_help
+            return 1
+            ;;
+    esac
+}
+
+_fav_help() {
+    cat <<'EOF'
+fav - run your favourite commands
+
+Usage:
+  fav                 List favourites and pick one by number to edit & run
+  fav add <command>   Add <command> to your favourites
+  fav add             Prompt to type/paste a command to add
+  fav help            Show this help
+
+Favourites file: ~/.fav/favourites.txt (override with $FAV_FILE)
+EOF
+}
+
+# Ensure the favourites file (and its directory) exists.
+_fav_ensure_file() {
+    if [ ! -f "$FAV_FILE" ]; then
+        mkdir -p "$(dirname "$FAV_FILE")" || return 1
+        touch "$FAV_FILE" || return 1
+    fi
+}
+
+_fav_add() {
+    _fav_ensure_file || { echo "fav: cannot create $FAV_FILE" >&2; return 1; }
+
+    local command="$*"
+
+    # No inline command supplied -> prompt interactively (preserves quotes/pipes).
+    if [ -z "$command" ]; then
+        read -e -r -p "Command to add: " command
+    fi
+
+    # Trim leading/trailing whitespace.
+    command="${command#"${command%%[![:space:]]*}"}"
+    command="${command%"${command##*[![:space:]]}"}"
+
+    if [ -z "$command" ]; then
+        echo "fav: nothing to add" >&2
+        return 1
+    fi
+
+    printf '%s\n' "$command" >> "$FAV_FILE"
+    printf 'Added: %s\n' "$command"
+}
+
+_fav_list() {
+    _fav_ensure_file || { echo "fav: cannot read $FAV_FILE" >&2; return 1; }
+
+    # Load non-empty lines into an array.
+    local -a cmds=()
+    local line
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] && continue
+        cmds+=("$line")
+    done < "$FAV_FILE"
+
+    if [ "${#cmds[@]}" -eq 0 ]; then
+        echo "No favourites yet. Add one with: fav add <command>"
+        return 0
+    fi
+
+    local i
+    for i in "${!cmds[@]}"; do
+        printf '%3d) %s\n' "$((i + 1))" "${cmds[$i]}"
+    done
+
+    local choice
+    read -e -r -p "Pick a number (Enter to cancel): " choice
+    [ -z "$choice" ] && return 0
+
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#cmds[@]}" ]; then
+        echo "fav: invalid selection" >&2
+        return 1
+    fi
+
+    local selected="${cmds[$((choice - 1))]}"
+
+    # Pre-fill an editable prompt with the chosen command, then run what's confirmed.
+    local edited
+    read -e -r -i "$selected" -p "> " edited
+    [ -z "$edited" ] && return 0
+    eval "$edited"
+}
