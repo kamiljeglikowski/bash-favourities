@@ -1,100 +1,147 @@
-# fav — favourite-commands tool for bash
+# fav — favourite-commands tool for bash & zsh
 
-A tiny bash tool to save your favourite shell commands and quickly recall, edit,
-and run them by number.
+A tiny shell tool to save your favourite commands and quickly recall, edit, and
+run them by number — across **multiple named lists**. Keep a general list,
+plus dedicated lists for Node.js, Android, or anything else, each launched by
+its own command.
+
+Works in both **bash** and **zsh** (the default macOS shell).
 
 This repository folder holds a **copy** of the working files for reference and
-backup. The live tool runs from `~/.fav/` (see [Installation](#installation)).
+backup. The live tool runs from `~/.favourites/` (see [Installation](#installation)).
 
 ---
 
 ## Files
 
-| File             | Purpose                                                              |
-|------------------|----------------------------------------------------------------------|
-| `fav`            | All the logic — a bash function meant to be **sourced**, not executed |
-| `favourites.txt` | Your saved commands, one raw command per line                        |
-| `README.md`      | This document                                                        |
+| File         | Purpose                                                                |
+|--------------|------------------------------------------------------------------------|
+| `fav`        | All the logic — a shell function meant to be **sourced**, not executed  |
+| `install.sh` | Installer: creates `~/.favourites/`, copies `fav`, prints setup steps   |
+| `my_list`    | Sample registry of lists (tag/description pairs)                        |
+| `README.md`  | This document                                                          |
 
-On a working machine these live at:
+On a working machine the live files live under `~/.favourites/`:
 
-- `~/.fav/fav`
-- `~/.fav/favourites.txt`
+```
+~/.favourites/
+  fav         # the engine (sourced from your shell startup file)
+  my_list     # registry of your lists: tag line, then description line, repeating
+  fav         # data file for the default list (one command per line)
+  jsfav       # data file for the "jsfav" list, etc.
+```
 
 ---
 
 ## What it does
 
+Every list is launched by its own command name (its **tag**). The default `fav`
+command always works. Each tag command supports:
+
 | Command            | Action                                                                                                 |
 |--------------------|--------------------------------------------------------------------------------------------------------|
-| `fav`              | Lists your favourites numbered. Pick a number → the command appears on an **editable** prompt → edit if you want, then Enter to run (empty/Ctrl-C cancels). |
+| `fav`              | Lists favourites numbered. Pick a number → the command appears on an **editable** prompt → edit if you want, then Enter to run (empty/Ctrl-C cancels). |
 | `fav add <command>`| Adds an inline command, e.g. `fav add ls -la`.                                                         |
-| `fav add`          | Prompts you to type/paste a command. Use this for commands with quotes or pipes, e.g. `grep foo *.txt \| wc -l`. |
+| `fav add`          | Prompts you to type/paste a command. Use this for commands with quotes or pipes.                       |
+| `fav create`       | Creates a **new list** with its own command name (see below).                                          |
+| `fav mylist`       | Shows all available lists with their descriptions.                                                     |
 | `fav help`         | Shows usage.                                                                                            |
 
-The list is read **live** from `favourites.txt` every time you run `fav`, so new
-commands show up immediately after `fav add` — no reloading required.
+Replace `fav` with any tag you created (e.g. `jsfav add "npm test"`). The
+`create` and `mylist` subcommands behave the same no matter which tag you use.
+
+Lists are read **live** from their data file every time, so new commands show up
+immediately after `add` — no reloading required.
+
+### Creating a new list
+
+```text
+$ fav create
+Command name to launch this list (e.g. fav, jsfav, and) (Default: fav): jsfav
+Short description of what this list is for: Node.js / JavaScript commands
+Created list "jsfav". Use it by typing: jsfav
+```
+
+- Pressing Enter at the first prompt (no input) creates/uses the default `fav`
+  list.
+- The tag is recorded in `~/.favourites/my_list` (tag line + description line),
+  a data file `~/.favourites/<tag>` is created, and the new command becomes
+  usable straight away in your current shell.
 
 ---
 
 ## Installation
 
-1. **Copy the files into `~/.fav/`:**
+1. **Run the installer from this folder:**
 
    ```bash
-   mkdir -p ~/.fav
-   cp fav ~/.fav/fav
-   cp favourites.txt ~/.fav/favourites.txt   # optional: brings your saved commands
+   ./install.sh
    ```
 
-2. **Load the tool from your `~/.bash_profile`.** Add this line:
+   It creates `~/.favourites/`, copies the `fav` engine there, and prints the
+   exact line to add to your shell startup file (it does **not** edit that file
+   for you).
+
+2. **Add the printed line to your shell startup file.** The installer detects
+   your shell and tells you which file to use — `~/.zshrc` for zsh or
+   `~/.bash_profile` for bash:
 
    ```bash
-   # Load the fav favourite-commands tool
-   [ -f ~/.fav/fav ] && source ~/.fav/fav
-   ```
-
-   You can append it safely with:
-
-   ```bash
-   printf '\n# Load the fav favourite-commands tool\n[ -f ~/.fav/fav ] && source ~/.fav/fav\n' >> ~/.bash_profile
+   [ -f ~/.favourites/fav ] && source ~/.favourites/fav
    ```
 
 3. **Reload your shell** (or open a new terminal):
 
    ```bash
-   source ~/.bash_profile
+   source ~/.zshrc        # zsh
+   # or
+   source ~/.bash_profile # bash
    ```
 
-That's it — type `fav` to start.
+That's it — type `fav` to start, or `fav create` to add another list.
 
 ### What that load line means
 
 ```bash
-[ -f ~/.fav/fav ] && source ~/.fav/fav
+[ -f ~/.favourites/fav ] && source ~/.favourites/fav
 ```
 
-- `[ -f ~/.fav/fav ]` — test whether the file exists and is a regular file.
+- `[ -f ~/.favourites/fav ]` — test whether the file exists and is a regular file.
 - `&&` — only run the next part if that test succeeded.
-- `source ~/.fav/fav` — read the file into your **current** shell so the `fav`
-  function becomes available. (Sourcing, not executing, is what keeps the
-  function defined after the file finishes.)
+- `source ~/.favourites/fav` — read the file into your **current** shell so the
+  `fav` function (and any lists you created) become available. Sourcing, not
+  executing, is what keeps the functions defined after the file finishes.
 
 The `-f` guard means a new terminal still opens cleanly even if the file is
 missing or renamed.
+
+### Upgrading from the old `~/.fav/` install
+
+Earlier versions lived in `~/.fav/`. If you used one, update your old startup
+line:
+
+```bash
+# old
+[ -f ~/.fav/fav ] && source ~/.fav/fav
+# new
+[ -f ~/.favourites/fav ] && source ~/.favourites/fav
+```
+
+Your previous commands in `~/.fav/favourites.txt` can be reused by copying them
+into `~/.favourites/fav`.
 
 ---
 
 ## Notes
 
+- **bash & zsh:** the engine adapts to each shell — it uses bash readline for
+  the editable run prompt and zsh's `vared` under zsh, and normalises array
+  handling so listing works the same in both.
 - **Why no file extension?** `fav` is *sourced*, so the extension is irrelevant
-  to bash. Keeping it extensionless matches the other dotfiles it lives beside
-  (`.bashrc`, `.bash_profile`) and mirrors the `fav` command name.
-- **Custom location:** set `FAV_FILE` before sourcing to point at a different
-  favourites file, e.g. `export FAV_FILE=~/mystuff/cmds.txt`.
+  to the shell. Keeping it extensionless matches the other dotfiles it lives
+  beside (`.zshrc`, `.bash_profile`) and mirrors the `fav` command name.
+- **Custom location:** set `FAV_DIR` before sourcing to point at a different
+  base folder, e.g. `export FAV_DIR=~/mystuff/favs`.
 - **Quotes & pipes:** when adding a command inline, the shell parses quotes and
   pipes before `fav` sees them. For anything fancy, use interactive `fav add`
   (no arguments) and paste the full command, or single-quote it inline.
-- **macOS / bash:** this assumes bash is your login shell. `~/.bash_profile` is
-  read by login shells; if `fav` ever fails to load in a new interactive
-  terminal, you may need to source `.bash_profile` from `.bashrc`.
