@@ -9,10 +9,14 @@ Kubernetes, or anything else, each launched by its own command.
 
 ## How it looks
 
+<p align="center">
+  <img src="assets/fav-screenshot.svg" alt="Fav showing a numbered, colourised menu of favourite commands in a terminal" width="760">
+</p>
+
 Type `fav` and you get a clean, numbered menu:
 
 ```text
- Your favourites commands, choose number
+ Your favourites commands
 ------------------------------------
    1) git push --force
    2) docker compose up -d --build
