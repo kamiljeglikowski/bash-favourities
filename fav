@@ -264,32 +264,6 @@ _fav_load_lists() {
     done < "$FAV_LIST"
 }
 
-# One-time migration: earlier versions stored each list's data file directly in
-# $FAV_DIR (e.g. $FAV_DIR/jsfav), which collided with the engine file at
-# $FAV_DIR/fav. Move any registered list files into $FAV_LISTS_DIR, never
-# touching the engine itself.
-_fav_migrate_lists() {
-    [ -f "$FAV_LIST" ] || return 0
-    local tag src dst
-    while IFS= read -r tag || [ -n "$tag" ]; do
-        IFS= read -r _ || true
-        [ -z "$tag" ] && continue
-        _fav_valid_tag "$tag" || continue
-
-        src="$FAV_DIR/$tag"
-        dst="$FAV_LISTS_DIR/$tag"
-        [ -f "$src" ] || continue
-        [ -e "$dst" ] && continue
-
-        # Never move the engine file (the old "fav" data path was the engine).
-        grep -q '_fav_run' "$src" 2>/dev/null && continue
-
-        _fav_ensure_lists_dir || return 0
-        mv "$src" "$dst" 2>/dev/null || true
-    done < "$FAV_LIST"
-}
-
 # Always provide the default `fav` command, then any configured lists.
-_fav_migrate_lists
 _fav_define fav
 _fav_load_lists
