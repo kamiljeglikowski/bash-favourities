@@ -13,31 +13,10 @@ Kubernetes, or anything else, each launched by its own command.
   <img src="assets/fav-screenshot.svg" alt="Fav showing a numbered, colourised menu of favourite commands in a terminal" width="760">
 </p>
 
-Type `fav` and you get a clean, numbered menu:
-
-```text
- Your favourites commands
-------------------------------------
-   1) git push --force
-   2) docker compose up -d --build
-   3) kubectl get pods -A
-Pick a number (Enter to cancel):
-```
-
-- A bold **magenta header**.
-- A gray separator rule under it.
-- Bright-cyan numbers with the command in bold, each indented with a small margin.
-
-Pick a number and the command appears on an **editable prompt** — tweak it if
-you like, then press Enter to run it:
-
-```text
-Pick a number (Enter to cancel): 2
-> docker compose up -d --build
-```
-
-Colours turn off automatically when output isn't a terminal or when `NO_COLOR`
-is set, so piping and redirecting stay clean.
+Run `fav` to see your saved commands in a colourised, numbered menu. Pick a
+number and the command drops onto an **editable prompt** — adjust it if you like,
+then press Enter to run it. Colours switch off automatically when output isn't a
+terminal or when `NO_COLOR` is set, so piping and redirecting stay clean.
 
 ---
 
@@ -79,15 +58,26 @@ Created list "jsfav". Use it by typing: jsfav
 
 ## Where things live
 
-The live tool runs from `~/.favourites/`:
+The live tool runs from `~/.favourites/`. A fresh install contains just two
+files:
 
 ```text
 ~/.favourites/
-  fav         # the engine (sourced from your shell startup file)
-  my_list     # registry of your lists: tag line, then description line, repeating
-  fav         # data file for the default list (one command per line)
-  jsfav       # data file for the "jsfav" list, etc.
+  fav       # the Fav engine, sourced from your shell startup file
+  my_list   # registry of your lists (a tag line + description line per list)
 ```
+
+Each list you create stores its commands in its own data file named after the
+list's command (tag). You don't have any of these until you create a list:
+
+```text
+~/.favourites/
+  general   # data file for a list launched by `general`
+  jsfav     # data file for a list launched by `jsfav`
+```
+
+`general` and `jsfav` above are **only examples** — you choose the names when you
+run `fav create`, and nothing requires them to exist.
 
 This repository holds the source files:
 
