@@ -132,9 +132,26 @@ _fav_list() {
         return 0
     fi
 
+    # Styling (Proposition 3): magenta header, gray rule, bright-cyan numbers.
+    # Honour NO_COLOR and non-terminal output by disabling colours.
+    local c_reset='' c_bold='' c_magenta='' c_gray='' c_bcyan=''
+    if [ -z "$NO_COLOR" ] && [ -t 1 ]; then
+        c_reset=$'\033[0m'
+        c_bold=$'\033[1m'
+        c_magenta=$'\033[35m'
+        c_gray=$'\033[90m'
+        c_bcyan=$'\033[96m'
+    fi
+
+    printf '%s%s Your favourites commands, choose number %s\n' \
+        "$c_bold" "$c_magenta" "$c_reset"
+    printf '%s------------------------------------%s\n' "$c_gray" "$c_reset"
+
     local i=0
     while [ "$i" -lt "${#cmds[@]}" ]; do
-        printf '%3d) %s\n' "$((i + 1))" "${cmds[$i]}"
+        printf '   %s%2d)%s %s%s%s\n' \
+            "$c_bcyan" "$((i + 1))" "$c_reset" \
+            "$c_bold" "${cmds[$i]}" "$c_reset"
         i=$((i + 1))
     done
 
