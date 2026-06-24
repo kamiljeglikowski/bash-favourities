@@ -25,7 +25,7 @@
     <text x="54" y="104"><tspan fill="#5af78e">kamil@macbook</tspan><tspan fill="#9aa0b4"> ~ %</tspan><tspan fill="#f8f8f2"> fav</tspan></text>
 
     <!-- header -->
-    <text x="54" y="142" font-weight="bold" fill="#ff79c6"> Your favourites commands, choose number</text>
+    <text x="54" y="142" font-weight="bold" fill="#ff79c6"> Your favourites commands</text>
     <!-- separator -->
     <text x="54" y="168" fill="#6272a4">------------------------------------</text>
 

@@ -16,7 +16,7 @@ Kubernetes, or anything else, each launched by its own command.
 Type `fav` and you get a clean, numbered menu:
 
 ```text
- Your favourites commands, choose number
+ Your favourites commands
 ------------------------------------
    1) git push --force
    2) docker compose up -d --build
