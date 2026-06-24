@@ -1,51 +1,55 @@
-# fav — favourite-commands tool for bash & zsh
+# Fav — your favourite commands, one keystroke away
 
-A tiny shell tool to save your favourite commands and quickly recall, edit, and
-run them by number — across **multiple named lists**. Keep a general list,
-plus dedicated lists for Node.js, Android, or anything else, each launched by
-its own command.
-
-Works in both **bash** and **zsh** (the default macOS shell).
-
-This repository folder holds a **copy** of the working files for reference and
-backup. The live tool runs from `~/.favourites/` (see [Installation](#installation)).
+**Fav** is a tiny shell tool for **bash** and **zsh** that lets you save your
+favourite commands and recall, edit, and run them by number — across **multiple
+named lists**. Keep a general list plus dedicated ones for Node.js, Docker,
+Kubernetes, or anything else, each launched by its own command.
 
 ---
 
-## Files
+## How it looks
 
-| File         | Purpose                                                                |
-|--------------|------------------------------------------------------------------------|
-| `fav`        | All the logic — a shell function meant to be **sourced**, not executed  |
-| `install.sh` | Installer: creates `~/.favourites/`, copies `fav`, prints setup steps   |
-| `my_list`    | Sample registry of lists (tag/description pairs)                        |
-| `README.md`  | This document                                                          |
+Type `fav` and you get a clean, numbered menu:
 
-On a working machine the live files live under `~/.favourites/`:
-
+```text
+ Your favourites commands, choose number
+------------------------------------
+   1) git push --force
+   2) docker compose up -d --build
+   3) kubectl get pods -A
+Pick a number (Enter to cancel):
 ```
-~/.favourites/
-  fav         # the engine (sourced from your shell startup file)
-  my_list     # registry of your lists: tag line, then description line, repeating
-  fav         # data file for the default list (one command per line)
-  jsfav       # data file for the "jsfav" list, etc.
+
+- A bold **magenta header**.
+- A gray separator rule under it.
+- Bright-cyan numbers with the command in bold, each indented with a small margin.
+
+Pick a number and the command appears on an **editable prompt** — tweak it if
+you like, then press Enter to run it:
+
+```text
+Pick a number (Enter to cancel): 2
+> docker compose up -d --build
 ```
+
+Colours turn off automatically when output isn't a terminal or when `NO_COLOR`
+is set, so piping and redirecting stay clean.
 
 ---
 
-## What it does
+## How it works
 
 Every list is launched by its own command name (its **tag**). The default `fav`
-command always works. Each tag command supports:
+command is always available. Each tag command supports:
 
-| Command            | Action                                                                                                 |
-|--------------------|--------------------------------------------------------------------------------------------------------|
-| `fav`              | Lists favourites numbered. Pick a number → the command appears on an **editable** prompt → edit if you want, then Enter to run (empty/Ctrl-C cancels). |
-| `fav add <command>`| Adds an inline command, e.g. `fav add ls -la`.                                                         |
-| `fav add`          | Prompts you to type/paste a command. Use this for commands with quotes or pipes.                       |
-| `fav create`       | Creates a **new list** with its own command name (see below).                                          |
-| `fav mylist`       | Shows all available lists with their descriptions.                                                     |
-| `fav help`         | Shows usage.                                                                                            |
+| Command             | Action                                                                                                          |
+|---------------------|-----------------------------------------------------------------------------------------------------------------|
+| `fav`               | Lists favourites numbered. Pick a number → the command appears on an **editable** prompt → edit, then Enter to run (empty/Ctrl-C cancels). |
+| `fav add <command>` | Adds an inline command, e.g. `fav add ls -la`.                                                                   |
+| `fav add`           | Prompts you to type or paste a command. Use this for commands with quotes or pipes.                             |
+| `fav create`        | Creates a **new list** with its own command name.                                                               |
+| `fav mylist`        | Shows all available lists with their descriptions.                                                              |
+| `fav help`          | Shows usage.                                                                                                     |
 
 Replace `fav` with any tag you created (e.g. `jsfav add "npm test"`). The
 `create` and `mylist` subcommands behave the same no matter which tag you use.
@@ -62,11 +66,33 @@ Short description of what this list is for: Node.js / JavaScript commands
 Created list "jsfav". Use it by typing: jsfav
 ```
 
-- Pressing Enter at the first prompt (no input) creates/uses the default `fav`
-  list.
+- Pressing Enter at the first prompt (no input) creates/uses the default `fav` list.
 - The tag is recorded in `~/.favourites/my_list` (tag line + description line),
   a data file `~/.favourites/<tag>` is created, and the new command becomes
   usable straight away in your current shell.
+
+---
+
+## Where things live
+
+The live tool runs from `~/.favourites/`:
+
+```text
+~/.favourites/
+  fav         # the engine (sourced from your shell startup file)
+  my_list     # registry of your lists: tag line, then description line, repeating
+  fav         # data file for the default list (one command per line)
+  jsfav       # data file for the "jsfav" list, etc.
+```
+
+This repository holds the source files:
+
+| File         | Purpose                                                                |
+|--------------|------------------------------------------------------------------------|
+| `fav`        | All the logic — a shell function meant to be **sourced**, not executed  |
+| `install.sh` | Installer: creates `~/.favourites/`, copies `fav`, prints setup steps   |
+| `my_list`    | Sample registry of lists (tag/description pairs)                        |
+| `README.md`  | This document                                                          |
 
 ---
 
@@ -82,8 +108,7 @@ Created list "jsfav". Use it by typing: jsfav
    exact line to add to your shell startup file (it does **not** edit that file
    for you).
 
-2. **Add the printed line to your shell startup file.** The installer detects
-   your shell and tells you which file to use — `~/.zshrc` for zsh or
+2. **Add the printed line to your shell startup file** — `~/.zshrc` for zsh or
    `~/.bash_profile` for bash:
 
    ```bash
@@ -115,33 +140,18 @@ That's it — type `fav` to start, or `fav create` to add another list.
 The `-f` guard means a new terminal still opens cleanly even if the file is
 missing or renamed.
 
-### Upgrading from the old `~/.fav/` install
-
-Earlier versions lived in `~/.fav/`. If you used one, update your old startup
-line:
-
-```bash
-# old
-[ -f ~/.fav/fav ] && source ~/.fav/fav
-# new
-[ -f ~/.favourites/fav ] && source ~/.favourites/fav
-```
-
-Your previous commands in `~/.fav/favourites.txt` can be reused by copying them
-into `~/.favourites/fav`.
-
 ---
 
 ## Notes
 
-- **bash & zsh:** the engine adapts to each shell — it uses bash readline for
-  the editable run prompt and zsh's `vared` under zsh, and normalises array
-  handling so listing works the same in both.
+- **bash & zsh:** the engine adapts to each shell — it uses bash readline for the
+  editable run prompt and zsh's `vared` under zsh, and normalises array handling
+  so listing works the same in both.
 - **Why no file extension?** `fav` is *sourced*, so the extension is irrelevant
   to the shell. Keeping it extensionless matches the other dotfiles it lives
   beside (`.zshrc`, `.bash_profile`) and mirrors the `fav` command name.
-- **Custom location:** set `FAV_DIR` before sourcing to point at a different
-  base folder, e.g. `export FAV_DIR=~/mystuff/favs`.
+- **Custom location:** set `FAV_DIR` before sourcing to point at a different base
+  folder, e.g. `export FAV_DIR=~/mystuff/favs`.
 - **Quotes & pipes:** when adding a command inline, the shell parses quotes and
   pipes before `fav` sees them. For anything fancy, use interactive `fav add`
   (no arguments) and paste the full command, or single-quote it inline.
