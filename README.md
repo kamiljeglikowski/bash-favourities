@@ -51,33 +51,36 @@ Created list "jsfav". Use it by typing: jsfav
 
 - Pressing Enter at the first prompt (no input) creates/uses the default `fav` list.
 - The tag is recorded in `~/.favourites/my_list` (tag line + description line),
-  a data file `~/.favourites/<tag>` is created, and the new command becomes
+  a data file `~/.favourites/lists/<tag>` is created, and the new command becomes
   usable straight away in your current shell.
 
 ---
 
 ## Where things live
 
-The live tool runs from `~/.favourites/`. A fresh install contains just two
-files:
+The live tool runs from `~/.favourites/`:
 
 ```text
 ~/.favourites/
-  fav       # the Fav engine, sourced from your shell startup file
-  my_list   # registry of your lists (a tag line + description line per list)
+  fav         # the Fav engine, sourced from your shell startup file
+  my_list     # registry of your lists (a tag line + description line per list)
+  lists/      # one data file per list, named after the list's command (tag)
 ```
 
-Each list you create stores its commands in its own data file named after the
-list's command (tag). You don't have any of these until you create a list:
+Each list you create stores its commands in its own file inside `lists/`, named
+after the list's command (tag):
 
 ```text
-~/.favourites/
-  general   # data file for a list launched by `general`
-  jsfav     # data file for a list launched by `jsfav`
+~/.favourites/lists/
+  fav         # commands for the default `fav` list
+  general     # commands for a list launched by `general`
+  jsfav       # commands for a list launched by `jsfav`
 ```
 
 `general` and `jsfav` above are **only examples** — you choose the names when you
-run `fav create`, and nothing requires them to exist.
+run `fav create`, and nothing requires them to exist. Keeping list data under
+`lists/` also means a list's data file can never clash with the `fav` engine
+file at the root.
 
 This repository holds the source files:
 

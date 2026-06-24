@@ -8,6 +8,7 @@
 
 FAV_DIR="${FAV_DIR:-$HOME/.favourites}"
 FAV_LIST="${FAV_LIST:-$FAV_DIR/my_list}"
+FAV_LISTS_DIR="${FAV_LISTS_DIR:-$FAV_DIR/lists}"
 
 # --- helpers ---------------------------------------------------------------
 
@@ -39,10 +40,16 @@ _fav_ensure_dir() {
     [ -d "$FAV_DIR" ] || mkdir -p "$FAV_DIR"
 }
 
-# Ensure the data file for a tag (and the base dir) exists.
-_fav_ensure_tag_file() {
+# Ensure the per-list data directory (and the base dir) exists.
+_fav_ensure_lists_dir() {
     _fav_ensure_dir || return 1
-    [ -f "$FAV_DIR/$1" ] || touch "$FAV_DIR/$1" || return 1
+    [ -d "$FAV_LISTS_DIR" ] || mkdir -p "$FAV_LISTS_DIR" || return 1
+}
+
+# Ensure the data file for a tag (and its directory) exists.
+_fav_ensure_tag_file() {
+    _fav_ensure_lists_dir || return 1
+    [ -f "$FAV_LISTS_DIR/$1" ] || touch "$FAV_LISTS_DIR/$1" || return 1
 }
 
 # Is $1 a legal command name ([A-Za-z_][A-Za-z0-9_]*)?
@@ -85,13 +92,13 @@ Usage:
   $tag mylist          Show all configured favourite lists
   $tag help            Show this help
 
-List file: $FAV_DIR/$tag
+List file: $FAV_LISTS_DIR/$tag
 EOF
 }
 
 _fav_add() {
     local tag="$1"; shift
-    _fav_ensure_tag_file "$tag" || { echo "fav: cannot create $FAV_DIR/$tag" >&2; return 1; }
+    _fav_ensure_tag_file "$tag" || { echo "fav: cannot create $FAV_LISTS_DIR/$tag" >&2; return 1; }
 
     local command="$*"
     if [ -z "$command" ]; then
@@ -107,13 +114,13 @@ _fav_add() {
         return 1
     fi
 
-    printf '%s\n' "$command" >> "$FAV_DIR/$tag"
+    printf '%s\n' "$command" >> "$FAV_LISTS_DIR/$tag"
     printf 'Added to %s: %s\n' "$tag" "$command"
 }
 
 _fav_list() {
     local tag="$1"
-    _fav_ensure_tag_file "$tag" || { echo "fav: cannot read $FAV_DIR/$tag" >&2; return 1; }
+    _fav_ensure_tag_file "$tag" || { echo "fav: cannot read $FAV_LISTS_DIR/$tag" >&2; return 1; }
 
     # Make zsh arrays behave like bash (0-indexed, ${arr[@]} expansion).
     if [ -n "$ZSH_VERSION" ]; then
@@ -125,7 +132,7 @@ _fav_list() {
     while IFS= read -r line || [ -n "$line" ]; do
         [ -z "$line" ] && continue
         cmds+=("$line")
-    done < "$FAV_DIR/$tag"
+    done < "$FAV_LISTS_DIR/$tag"
 
     if [ "${#cmds[@]}" -eq 0 ]; then
         printf 'No favourites in "%s" yet. Add one with: %s add <command>\n' "$tag" "$tag"
@@ -257,6 +264,32 @@ _fav_load_lists() {
     done < "$FAV_LIST"
 }
 
+# One-time migration: earlier versions stored each list's data file directly in
+# $FAV_DIR (e.g. $FAV_DIR/jsfav), which collided with the engine file at
+# $FAV_DIR/fav. Move any registered list files into $FAV_LISTS_DIR, never
+# touching the engine itself.
+_fav_migrate_lists() {
+    [ -f "$FAV_LIST" ] || return 0
+    local tag src dst
+    while IFS= read -r tag || [ -n "$tag" ]; do
+        IFS= read -r _ || true
+        [ -z "$tag" ] && continue
+        _fav_valid_tag "$tag" || continue
+
+        src="$FAV_DIR/$tag"
+        dst="$FAV_LISTS_DIR/$tag"
+        [ -f "$src" ] || continue
+        [ -e "$dst" ] && continue
+
+        # Never move the engine file (the old "fav" data path was the engine).
+        grep -q '_fav_run' "$src" 2>/dev/null && continue
+
+        _fav_ensure_lists_dir || return 0
+        mv "$src" "$dst" 2>/dev/null || true
+    done < "$FAV_LIST"
+}
+
 # Always provide the default `fav` command, then any configured lists.
+_fav_migrate_lists
 _fav_define fav
 _fav_load_lists
