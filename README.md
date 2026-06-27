@@ -30,6 +30,7 @@ command is always available. Each tag command supports:
 | `fav`               | Lists favourites numbered. Pick a number → the command appears on an **editable** prompt → edit, then Enter to run (empty/Ctrl-C cancels). |
 | `fav add <command>` | Adds an inline command, e.g. `fav add ls -la`.                                                                   |
 | `fav add`           | Prompts you to type or paste a command. Use this for commands with quotes or pipes.                             |
+| `fav remove`        | Lists favourites numbered. Pick a number → press Enter once more to confirm → the command is removed.            |
 | `fav create`        | Creates a **new list** with its own command name.                                                               |
 | `fav mylist`        | Shows all available lists with their descriptions.                                                              |
 | `fav help`          | Shows usage.                                                                                                     |
@@ -47,8 +48,8 @@ Once the engine is sourced, `<Tab>` autocompletes in both bash and zsh:
 - **Command names** — type a prefix of any list command and press Tab to
   complete it, e.g. `jsf<Tab>` → `jsfav`.
 - **Subcommands** — after a list command, Tab completes the first word to a
-  subcommand, e.g. `fav a<Tab>` → `fav add` (also offers `create`, `mylist`,
-  `help`).
+  subcommand, e.g. `fav a<Tab>` → `fav add` (also offers `remove`, `create`,
+  `mylist`, `help`).
 
 Completion is scoped to command names and subcommands only — the commands you
 save inside a list are never suggested or run by Tab. Newly created lists get

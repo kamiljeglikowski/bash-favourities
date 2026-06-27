@@ -73,7 +73,7 @@ _fav_is_registered() {
 }
 
 # Subcommands offered by tab completion (first argument of any tag command).
-_FAV_SUBCOMMANDS=(add create mylist help)
+_FAV_SUBCOMMANDS=(add remove create mylist help)
 
 # Completion generator. Offers the subcommands only when completing the first
 # argument; later words get nothing so the shell falls back to its default
@@ -118,6 +118,7 @@ Usage:
   $tag                 List favourites and pick one by number to edit & run
   $tag add <command>   Add <command> to this list
   $tag add             Prompt to type/paste a command to add
+  $tag remove          List favourites and pick one by number to remove
   $tag create          Create a new favourites list (its own command)
   $tag mylist          Show all configured favourite lists
   $tag help            Show this help
@@ -207,6 +208,85 @@ _fav_list() {
     _fav_edit_run "${cmds[$((choice - 1))]}"
 }
 
+_fav_remove() {
+    local tag="$1"
+    _fav_ensure_tag_file "$tag" || { echo "fav: cannot read $FAV_LISTS_DIR/$tag" >&2; return 1; }
+
+    # Make zsh arrays behave like bash (0-indexed, ${arr[@]} expansion).
+    if [ -n "$ZSH_VERSION" ]; then
+        setopt local_options ksh_arrays
+    fi
+
+    local -a cmds=()
+    local line
+    while IFS= read -r line || [ -n "$line" ]; do
+        [ -z "$line" ] && continue
+        cmds+=("$line")
+    done < "$FAV_LISTS_DIR/$tag"
+
+    if [ "${#cmds[@]}" -eq 0 ]; then
+        printf 'No favourites in "%s" yet. Add one with: %s add <command>\n' "$tag" "$tag"
+        return 0
+    fi
+
+    # Styling (match _fav_list): magenta header, gray rule, bright-cyan numbers.
+    # Honour NO_COLOR and non-terminal output by disabling colours.
+    local c_reset='' c_bold='' c_magenta='' c_gray='' c_bcyan=''
+    if [ -z "$NO_COLOR" ] && [ -t 1 ]; then
+        c_reset=$'\033[0m'
+        c_bold=$'\033[1m'
+        c_magenta=$'\033[35m'
+        c_gray=$'\033[90m'
+        c_bcyan=$'\033[96m'
+    fi
+
+    printf '%s%s Your favourites commands %s\n' \
+        "$c_bold" "$c_magenta" "$c_reset"
+    printf '%s------------------------------------%s\n' "$c_gray" "$c_reset"
+
+    local i=0
+    while [ "$i" -lt "${#cmds[@]}" ]; do
+        printf '   %s%2d)%s %s%s%s\n' \
+            "$c_bcyan" "$((i + 1))" "$c_reset" \
+            "$c_bold" "${cmds[$i]}" "$c_reset"
+        i=$((i + 1))
+    done
+
+    local choice
+    _fav_read_line "Type number to remove command (Enter to cancel): " choice
+    [ -z "$choice" ] && return 0
+
+    case "$choice" in
+        ''|*[!0-9]*) echo "fav: invalid selection" >&2; return 1 ;;
+    esac
+    if [ "$choice" -lt 1 ] || [ "$choice" -gt "${#cmds[@]}" ]; then
+        echo "fav: invalid selection" >&2
+        return 1
+    fi
+
+    local target="${cmds[$((choice - 1))]}"
+
+    # Require one more Enter to confirm the removal.
+    local confirm
+    _fav_read_line "Press enter one more time to remove this command" confirm
+    [ -n "$confirm" ] && { echo "fav: removal cancelled" >&2; return 0; }
+
+    # Rewrite the list file, dropping the chosen command (first match only).
+    local tmp removed=0 j=0
+    tmp="$(mktemp "${TMPDIR:-/tmp}/fav.XXXXXX")" || { echo "fav: cannot create temp file" >&2; return 1; }
+    while [ "$j" -lt "${#cmds[@]}" ]; do
+        if [ "$j" -eq "$((choice - 1))" ] && [ "$removed" -eq 0 ]; then
+            removed=1
+        else
+            printf '%s\n' "${cmds[$j]}" >> "$tmp"
+        fi
+        j=$((j + 1))
+    done
+    mv "$tmp" "$FAV_LISTS_DIR/$tag" || { rm -f "$tmp"; echo "fav: cannot update $FAV_LISTS_DIR/$tag" >&2; return 1; }
+
+    printf 'Command %s was removed\n' "$target"
+}
+
 _fav_mylist() {
     printf 'Available favourite lists:\n'
     local tag desc fav_seen=0
@@ -259,6 +339,9 @@ _fav_run() {
         add)
             shift
             _fav_add "$tag" "$@"
+            ;;
+        remove)
+            _fav_remove "$tag"
             ;;
         create)
             _fav_create
