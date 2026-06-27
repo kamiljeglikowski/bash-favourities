@@ -25,9 +25,10 @@ list. Completion never touches list contents.
   after the function is defined, so newly created lists get completion
   immediately:
   - **bash**: `complete -F _fav_complete <tag>`.
-  - **zsh**: enable `bashcompinit` once at load time, after which the same
-    `complete -F` call works unchanged. This keeps a single cross-shell code
-    path.
+  - **zsh**: enable `bashcompinit` once at load time (bootstrapping `compinit`
+    first if the session hasn't already, since `bashcompinit` depends on
+    `compdef`), after which the same `complete -F` call works unchanged. This
+    keeps a single cross-shell code path.
 - Registration is guarded so it is a no-op if `complete` is unavailable (e.g. a
   non-interactive minimal shell), avoiding errors on source.
 

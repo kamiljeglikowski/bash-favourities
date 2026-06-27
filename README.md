@@ -40,6 +40,21 @@ Replace `fav` with any tag you created (e.g. `jsfav add "npm test"`). The
 Lists are read **live** from their data file every time, so new commands show up
 immediately after `add` — no reloading required.
 
+### Tab completion
+
+Once the engine is sourced, `<Tab>` autocompletes in both bash and zsh:
+
+- **Command names** — type a prefix of any list command and press Tab to
+  complete it, e.g. `jsf<Tab>` → `jsfav`.
+- **Subcommands** — after a list command, Tab completes the first word to a
+  subcommand, e.g. `fav a<Tab>` → `fav add` (also offers `create`, `mylist`,
+  `help`).
+
+Completion is scoped to command names and subcommands only — the commands you
+save inside a list are never suggested or run by Tab. Newly created lists get
+completion automatically.
+
+
 ### Creating a new list
 
 ```text
